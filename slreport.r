@@ -122,7 +122,16 @@ df <- df |>
 glimpse(df)
 #converting age, year, into integer values
 df <- df |> mutate(commute_time = as.numeric(commute_time))
-df <- df |> mutate(age = as.numeric(age))
+df <- df |>
+  mutate(
+    year_level = case_when(
+      year_level == "A. 1st" ~ 1,
+      year_level == "B. 2nd" ~ 2,
+      year_level == "C. 3rd" ~ 3,
+      year_level == "D. 4th" ~ 4,
+      year_level == "E. 5th or more" ~ 5,
+      TRUE ~ NA_real_  # in case of missing/other values
+    ))
 df <- df |> mutate(year_level = as.numeric(year_level)) 
 
 
@@ -268,16 +277,48 @@ likert_community_1 <- ggplot(df_long_1, aes(x = prop, y = question, fill = respo
   scale_x_continuous(labels = scales::percent_format()) +
   scale_fill_brewer(
     palette = "RdBu",
-    direction = -1
+    direction = 1
   ) +
   labs(x = "Proportion", y = NULL, fill = "Response") +
-  theme_minimal(base_size = 13) +
-  theme(
-    legend.position = "bottom",
-    legend.justification = "center",
-    legend.box.just = "center")
+  theme_minimal(base_size = 13) 
 
 likert_community_1
+
+
+df_first_year <- df |> 
+  filter(year_level == 1)
+df_first_year 
+
+# Transform to long format
+df_long_1F <- df_first_year |>
+  pivot_longer(
+    cols = all_of(community_vars_1),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(question, levels = community_vars_1, labels = community_labels_1[community_vars_1])
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+# Simple stacked Likert plot using scale_fill_brewer
+likert_community_1F <- ggplot(df_long_1F, aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(
+    palette = "PiYG", direction = 1  # lighter, softer colors for first-year plot?
+  ) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_community_1F
+
+print(likert_community_1F + likert_community_1)
+
 
 community_2_vars <- c(
   "lonely",
@@ -317,7 +358,7 @@ likert_community_2 <- ggplot(df_long_2, aes(x = prop, y = question, fill = respo
   scale_x_continuous(labels = scales::percent_format()) +
   scale_fill_brewer(
     palette = "RdBu",
-    direction = -1) +
+    direction = 1) +
   labs(x = "Proportion", y = NULL, fill = "Response") +
   theme_minimal(base_size = 13) +
   theme(
@@ -326,6 +367,8 @@ likert_community_2 <- ggplot(df_long_2, aes(x = prop, y = question, fill = respo
     legend.box.just = "center")         # ensures box itself is centered
 
 likert_community_2
+
+
 
 
 
