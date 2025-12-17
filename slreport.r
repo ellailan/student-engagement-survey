@@ -368,7 +368,56 @@ likert_community_2 <- ggplot(df_long_2, aes(x = prop, y = question, fill = respo
 
 likert_community_2
 
+#Significance testing
 
+# Filter attention-checked students
+df_checked <- df |> filter(attention_SD == "Strongly Disagree")
 
+# Initialize results tibble for Community 1
+community_1_mw_results <- tibble(
+  question = character(),
+  first_year_median = numeric(),
+  non_first_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
 
+# Loop through community_vars_1
+for(q in community_vars_1) {
+  
+  # Convert responses to numeric
+  x <- df_checked |> filter(year_level == 1) |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_checked |> filter(year_level != 1) |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  # Compute medians (keep for reference)
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  # Mann-Whitney U test
+  test <- wilcox.test(x, y)
+  
+  # Compute mean ranks for directionality
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x)+1):length(combined)])
+  
+  higher <- case_when(
+    mean_rank_x > mean_rank_y ~ "First-year higher",
+    mean_rank_y > mean_rank_x ~ "Non-first-year higher",
+    TRUE ~ "Equal"
+  )
+  
+  # Add to results
+  community_1_mw_results <- community_1_mw_results |> add_row(
+    question = community_labels_1[[q]],
+    first_year_median = med_x,
+    non_first_median = med_y,
+    p_value = test$p.value,
+    significance = ifelse(test$p.value < 0.05, "*", ""),
+    higher_group = higher
+  )
+}
 
+community_1_mw_results
