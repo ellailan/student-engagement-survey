@@ -1,3 +1,6 @@
+
+library(wesanderson)
+library(likert)
 library(tidyverse)
 library(dplyr)
 library(stringr)
@@ -72,6 +75,7 @@ df <- df |>
     feel_judged         = Q23_6,
     low_mood          = Q23_7,
     anxious = Q23_8,
+    
     one_word_student_life = Q24,
     constituency_events = Q25_1,
     constituency_resource = Q25_2,
@@ -175,7 +179,7 @@ sent_counts
 
 #cloud with only positive words
 positive_cloud <- sent_words |>
-  filter(sentiment == "positive") %>%
+  filter(sentiment == "positive") |>
   ggplot(aes(label = word, size = n, color = n)) +
   geom_text_wordcloud(rm_outside = TRUE, family = "Futura") +
   scale_size_area(max_size = 12) +
@@ -185,7 +189,7 @@ positive_cloud <- sent_words |>
 
 #cloud with only negative words
 negative_cloud <- sent_words |>
-  filter(sentiment == "negative") %>%
+  filter(sentiment == "negative") |>
   ggplot(aes(label = word, size = n, color = n)) +
   geom_text_wordcloud(rm_outside = TRUE, family = "Futura") +
   scale_size_area(max_size = 12) +
@@ -195,4 +199,133 @@ negative_cloud <- sent_words |>
 
 #print positive, negative clouds side by side
 print(positive_cloud + negative_cloud)
+
+
+
+
+
+
+
+#likert scale graphs
+
+# Likert scale and numeric mapping
+
+
+likert_levels <- c(
+  "Strongly Disagree",
+  "Somewhat Disagree",
+  "Neither Disagree nor Agree",
+  "Somewhat Agree",
+  "Strongly Agree")
+
+# variables (exclude attention_SD from plotting)
+community_vars_1 <- c(
+  "sense_of_belonging",
+  "safe_on_campus",
+  "sense_of_community",
+  "close_friends",
+  "work_life",
+  "phys_activity",
+  "approach_strangers",
+  "place_for_me"
+)
+
+# Human-readable labels
+community_labels_1 <- c(
+  sense_of_belonging = "Feel a Sense of Belonging",
+  safe_on_campus     = "Feel Safe on Campus",
+  sense_of_community = "Feel Part of a Community",
+  close_friends      = "Have Close Friends",
+  work_life          = "Manage Work-Life Balance",
+  phys_activity      = "Get Enough Physical Activity",
+  approach_strangers = "Comfortable Approaching Strangers",
+  place_for_me       = "University is a Place for Me"
+)
+
+# Filter respondents who passed attention check
+df_filtered <- df |> 
+  filter(attention_SD == "Strongly Disagree")
+
+# Transform to long format
+df_long_1 <- df_filtered |>
+  pivot_longer(
+    cols = all_of(community_vars_1),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(question, levels = community_vars_1, labels = community_labels_1[community_vars_1])
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+# Plot using Brewer palette
+likert_community_1 <- ggplot(df_long_1, aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(
+    palette = "RdBu",
+    direction = -1
+  ) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    legend.justification = "center",
+    legend.box.just = "center")
+
+likert_community_1
+
+community_2_vars <- c(
+  "lonely",
+  "hard_make_friends",
+  "time_alone",
+  "plans_with_friends",
+  "regret_ubc",
+  "feel_judged",
+  "low_mood",
+  "anxious")
+
+# Human-readable labels
+community_2_labels <- c(
+  lonely = "Feel Lonely",
+  hard_make_friends = "Hard to Make Friends",
+  time_alone = "Spend a Lot of Time Alone",
+  plans_with_friends = "Make Plans with Friends",
+  regret_ubc = "Regret Choosing UBC",
+  feel_judged = "Feel Judged by Others",
+  low_mood = "Low Mood",
+  anxious = "Anxious")
+
+df_long_2 <- df |>
+  pivot_longer(
+    cols = all_of(community_2_vars),
+    names_to = "question",
+    values_to = "response") |> filter(!is.na(response)) |>  # remove NAs
+  mutate(response = factor(response, levels = likert_levels),
+    question = factor(question, levels = community_2_vars, labels = community_2_labels[community_2_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+# Plot using a red-to-blue Brewer palette
+likert_community_2 <- ggplot(df_long_2, aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(
+    palette = "RdBu",
+    direction = -1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    legend.justification = "center",   # center horizontally
+    legend.box.just = "center")         # ensures box itself is centered
+
+likert_community_2
+
+
 
