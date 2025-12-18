@@ -320,7 +320,7 @@ likert_community_1F
 print(likert_community_1F + likert_community_1)
 
 
-community_2_vars <- c(
+community_vars_2 <- c(
   "lonely",
   "hard_make_friends",
   "time_alone",
@@ -331,7 +331,7 @@ community_2_vars <- c(
   "anxious")
 
 # Human-readable labels
-community_2_labels <- c(
+community_labels_2 <- c(
   lonely = "Feel Lonely",
   hard_make_friends = "Hard to Make Friends",
   time_alone = "Spend a Lot of Time Alone",
@@ -343,11 +343,11 @@ community_2_labels <- c(
 
 df_long_2 <- df |>
   pivot_longer(
-    cols = all_of(community_2_vars),
+    cols = all_of(community_vars_2),
     names_to = "question",
     values_to = "response") |> filter(!is.na(response)) |>  # remove NAs
   mutate(response = factor(response, levels = likert_levels),
-    question = factor(question, levels = community_2_vars, labels = community_2_labels[community_2_vars])) |>
+    question = factor(question, levels = community_vars_2, labels = community_labels_2[community_vars_2])) |>
   count(question, response) |>
   group_by(question) |>
   mutate(prop = n / sum(n))
@@ -421,3 +421,53 @@ for(q in community_vars_1) {
 }
 
 community_1_mw_results
+
+
+# Initialize results tibble for Community 1
+community_2_mw_results <- tibble(
+  question = character(),
+  first_year_median = numeric(),
+  non_first_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+# Loop through community_vars_1
+for(q in community_vars_2) {
+  
+  # Convert responses to numeric
+  x <- df_checked |> filter(year_level == 1) |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_checked |> filter(year_level != 1) |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  # Compute medians (keep for reference)
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  # Mann-Whitney U test
+  test <- wilcox.test(x, y)
+  
+  # Compute mean ranks for directionality
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x)+1):length(combined)])
+  
+  higher <- case_when(
+    mean_rank_x > mean_rank_y ~ "First-year higher",
+    mean_rank_y > mean_rank_x ~ "Non-first-year higher",
+    TRUE ~ "Equal"
+  )
+  
+  # Add to results
+  community_2_mw_results <- community_2_mw_results |> add_row(
+    question = community_labels_2[[q]],
+    first_year_median = med_x,
+    non_first_median = med_y,
+    p_value = test$p.value,
+    significance = ifelse(test$p.value < 0.05, "*", ""),
+    higher_group = higher
+  )
+}
+
+community_2_mw_results
