@@ -131,6 +131,46 @@ living_stat_dist <- living_stat |> ggplot(aes(x = fct_infreq(living_arrangement)
 living_stat_dist
 
 
+social <- df |> select(social_attitude) |> drop_na()
+social
+
+social_dist <- social |> ggplot(aes(x = fct_infreq(social_attitude), fill = social_attitude)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Social Attitude Distribution", x = "Social Attitude", y = "Count") +
+  theme_minimal(base_size = 14)
+
+social_dist
+
+
+weekend <- df |> 
+  select(weekend_activities) |> 
+  drop_na() |> 
+  # Split at A-J labels
+  mutate(weekend_activities = str_split(weekend_activities, "(?=[A-J]\\.)")) |> 
+  unnest(weekend_activities) |> 
+  # Remove trailing commas
+  mutate(weekend_activities = str_replace(weekend_activities, ",$", "")) |>
+  filter(!grepl("[0-9]", weekend_activities))
+#because options had commas inside, new delim had to be used....
+
+weekend
+
+weekend_dist <- ggplot(weekend, 
+                           aes(x = fct_relevel(fct_infreq(weekend_activities),
+                                               "J. None of the above"),
+                               fill = weekend_activities)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Weekend Activity",
+    x = "Activity",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 14)
+
+weekend_dist
+
 
 
 
