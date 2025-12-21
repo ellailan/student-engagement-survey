@@ -63,7 +63,6 @@ affiliate_school_dist
 
 
 
-
 #some numbers leftover from early survey design, testing... cutting them out here
 faculty <- df |> select(student_society) |> drop_na() |> filter(!grepl("[0-9]", student_society))
 faculty
@@ -102,6 +101,40 @@ extracurric_dist <- ggplot(extracurric,
   theme_minimal(base_size = 14)
 
 extracurric_dist
+
+
+employment_stat <- df |> select(employment) |> drop_na()
+
+employment_stat
+
+employment_stat_dist <- employment_stat |> ggplot(aes(x = fct_infreq(employment), fill = employment)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Employment Status Distribution", x = "Employment Status", y = "Count") +
+  theme_minimal(base_size = 14)
+
+employment_stat_dist
+
+
+
+
+living_stat <- df |> select(living_arrangement) |> drop_na()
+
+living_stat
+
+living_stat_dist <- living_stat |> ggplot(aes(x = fct_infreq(living_arrangement), fill = living_arrangement)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Living Arrangement Distribution", x = "Living Arrangement", y = "Count") +
+  theme_minimal(base_size = 14)
+
+living_stat_dist
+
+
+
+
+
+
 
 
 commute <- df |> select(commute_time) |> drop_na() |> 
