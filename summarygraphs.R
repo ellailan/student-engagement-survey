@@ -171,7 +171,7 @@ weekend_dist <- ggplot(weekend,
 
 weekend_dist
 
-
+#why is there an extra bar?
 
 
 
@@ -239,6 +239,19 @@ age_dist <- ggplot(age, aes(x = age)) +
 age_dist 
 
 
+
+
+year_of_study <- df |> select(year_level) |> drop_na()
+year_of_study
+
+year_of_study_dist <- year_of_study |> 
+  mutate(year_level = factor(year_level)) |> 
+  ggplot(aes(x = year_level, fill = year_level)) +
+  geom_bar(show.legend = FALSE) +
+  labs(title = "Year Level Distribution", x = "Year Level", y = "Count") +
+  theme_minimal(base_size = 14)
+
+year_of_study_dist
 
 
 
