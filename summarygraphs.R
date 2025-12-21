@@ -17,7 +17,8 @@ student_status_dist <- df |>
   ) +
   labs(
     x = "Student Status",
-    y = "Number of Respondents"
+    y = "Number of Respondents",
+    title = "Student Status"
   ) +
   theme_minimal(base_size = 13) +
   theme(
@@ -29,13 +30,47 @@ student_status_dist <- df |>
 
 student_status_dist
 
+
+affiliate <- df |> select(isaffiliate) |> drop_na()
+
+affiliate_dist <- ggplot(affiliate, aes(x = fct_infreq(isaffiliate), fill = isaffiliate)) +
+  geom_bar(show.legend = FALSE) +
+  scale_fill_manual(values = c("steelblue", "tomato")) +
+  labs(
+    title = "Affiliate Status Distribution",
+    x = "Affiliate Status",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 14)
+
+affiliate_dist
+
+
+affiliate_school<-  df |> select(affiliate_school) |> drop_na()
+affiliate_school
+
+affiliate_school_dist <- ggplot(affiliate_school, aes(x = fct_infreq(affiliate_school), fill = affiliate_school)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Affiliate School Distribution",
+    x = "Affiliate School",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 14)
+
+affiliate_school_dist
+
+
+
+
 #some numbers leftover from early survey design, testing... cutting them out here
 faculty <- df |> select(student_society) |> drop_na() |> filter(!grepl("[0-9]", student_society))
 faculty
 
 faculty_dist <- ggplot(faculty, aes(x = fct_infreq(student_society), fill = student_society)) +
   geom_bar(show.legend = FALSE) +
-  coord_flip() +
+  coord_flip() + 
   labs(
     title = "Student Society Memberships",
     x = "Student Society",
