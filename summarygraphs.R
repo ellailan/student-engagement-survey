@@ -151,7 +151,7 @@ weekend <- df |>
   unnest(weekend_activities) |> 
   # Remove trailing commas
   mutate(weekend_activities = str_replace(weekend_activities, ",$", "")) |>
-  filter(!grepl("[0-9]", weekend_activities))
+  filter(!grepl("[0-9]", weekend_activities)) |> filter(weekend_activities != "")
 #because options had commas inside, new delim had to be used....
 
 weekend
@@ -252,6 +252,45 @@ year_of_study_dist <- year_of_study |>
   theme_minimal(base_size = 14)
 
 year_of_study_dist
+
+gender <- df |> select(gender) |> drop_na()
+gender
+
+gender_dist <- gender |>
+  ggplot(aes(x = gender, fill = gender)) +
+  geom_bar(show.legend = FALSE) +
+  labs(title = "Gender Distribution", x = "Gender", y = "Count") +
+  theme_minimal(base_size = 14)
+gender_dist
+
+lgbtq <- df |> select(lgbtq) |> drop_na()
+lgbtq
+
+lgbtq_dist <- lgbtq |>
+  ggplot(aes(x = lgbtq, fill = lgbtq)) +
+  geom_bar(show.legend = FALSE) +
+  labs(title = "LGBTQ Self-Identification", x = "Identity", y = "Count") +
+  theme_minimal(base_size = 14)
+lgbtq_dist
+
+ethnicity <- df |> select(ethnicity) |> drop_na() |>
+  # Split at A-J labels
+  mutate(ethnicity = str_split(ethnicity, "(?=[A-J]\\.)")) |> 
+  unnest(ethnicity) |> 
+  # Remove trailing commas
+  mutate(ethnicity = str_replace(ethnicity, ",$", "")) |>
+  filter(!grepl("[0-9]", ethnicity)) |> filter(ethnicity != "")
+#because options had commas inside, new delim had to be used....
+ethnicity
+
+ethnicity_dist <- ethnicity |> ggplot(aes(x = fct_infreq(ethnicity), fill = ethnicity)) +
+  geom_bar(show.legend = FALSE) +
+    coord_flip() +
+  labs(title = "Ethnic Self-Identification", x = "Ethnicity", y = "Count") +
+  theme_minimal(base_size = 14)
+ethnicity_dist
+
+
 
 
 
