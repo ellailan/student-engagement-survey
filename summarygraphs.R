@@ -80,6 +80,30 @@ faculty_dist <- ggplot(faculty, aes(x = fct_infreq(student_society), fill = stud
 
 faculty_dist
 
+extracurric <- df |> select(extracurriculars) |> drop_na() |>
+  # Split multiple activities into separate rows
+  separate_rows(extracurriculars, sep = ",\\s*") |> 
+  mutate(extracurriculars = str_trim(extracurriculars)) |>  # Remove extra spaces
+  filter(!grepl("[0-9]", extracurriculars)) #same numbers issue as faculty
+
+
+extracurric
+
+extracurric_dist <- ggplot(extracurric, 
+                           aes(x = fct_relevel(fct_infreq(extracurriculars), "K. None"),
+                               fill = extracurriculars)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Extracurricular Involvement",
+    x = "Activity",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 14)
+
+extracurric_dist
+
+
 commute <- df |> select(commute_time) |> drop_na() |> 
   mutate(commute_time = as.numeric(commute_time)) |>
   filter(commute_time <= 480) #some troll values screwed up the graph
@@ -139,7 +163,7 @@ age_dist <- ggplot(age, aes(x = age)) +
     axis.title = element_text(face = "bold")
   )
 
-age_dist
+age_dist 
 
 
 
