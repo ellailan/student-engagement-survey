@@ -32,6 +32,45 @@ commute_dist
 
 
 
+
+age <- df |> select(age) |> drop_na() |> 
+  mutate(age = as.numeric(age)) |>
+  filter(age < 100, age > 13) #some troll values screwed up the graph
+age
+
+
+#histogram of distribution time
+age_dist <- ggplot(age, aes(x = age)) +
+  geom_histogram(
+    binwidth = 1,
+    boundary = 0,
+    fill = wesanderson::wes_palette("GrandBudapest2", 1),
+    alpha = 0.9
+  ) +
+  scale_x_continuous(
+    labels = scales::comma,
+  ) +
+  labs(
+    x = "Age of Students",
+    y = "Number of Respondents"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.title = element_text(face = "bold")
+  )
+
+age_dist
+
+
+
+
+
+
+
+
+
+
+
 #generate a word-cloud with descriptions of student life
 bing <- get_sentiments("bing")
 
