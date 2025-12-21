@@ -1,22 +1,34 @@
 source("datacleaning.R")
 #only drop NAs when needed... 
-commute <- df |> select(commute_time) |> drop_na()
-#histogram of distribution time
-commute_distribution <- ggplot(commute, aes(x = commute_time)) +
-  geom_histogram(
-    bins = 10,
-    color = "white",
-    fill = "skyblue"
-  ) +
-  theme_minimal() +
-  labs(
-    title = "Commute Time Distribution",
-    x = "Commute Time (minutes)",
-    y = "Count"
-  )
+commute <- df |> select(commute_time) |> drop_na() |> 
+  mutate(commute_time = as.numeric(commute_time)) |>
+  filter(commute_time <= 480) #some troll values screwed up the graph
+
 
 commute
-commute_distribution
+
+#histogram of distribution time
+commute_dist <- ggplot(commute, aes(x = commute_time)) +
+  geom_histogram(
+    bins = 60,
+    fill = wesanderson::wes_palette("Zissou1", 1),
+    color = "white",
+    alpha = 0.9
+  ) +
+  scale_x_continuous(
+    labels = scales::comma,
+    limits = c(0, 480)
+  ) +
+  labs(
+    x = "Commute Time (minutes)",
+    y = "Number of Respondents"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.title = element_text(face = "bold")
+  )
+
+commute_dist
 
 
 
