@@ -113,7 +113,7 @@ employment_stat_dist <- employment_stat |> ggplot(aes(x = fct_infreq(employment)
   labs(title = "Employment Status Distribution", x = "Employment Status", y = "Count") +
   theme_minimal(base_size = 14)
 
-employment_stat_dist
+employment_stat_distx
 
 
 
@@ -274,13 +274,12 @@ lgbtq_dist <- lgbtq |>
 lgbtq_dist
 
 ethnicity <- df |> select(ethnicity) |> drop_na() |>
-  # Split at A-J labels
+  # Split at labels
   mutate(ethnicity = str_split(ethnicity, "(?=[A-J]\\.)")) |> 
   unnest(ethnicity) |> 
   # Remove trailing commas
   mutate(ethnicity = str_replace(ethnicity, ",$", "")) |>
   filter(!grepl("[0-9]", ethnicity)) |> filter(ethnicity != "")
-#because options had commas inside, new delim had to be used....
 ethnicity
 
 ethnicity_dist <- ethnicity |> ggplot(aes(x = fct_infreq(ethnicity), fill = ethnicity)) +
@@ -291,10 +290,56 @@ ethnicity_dist <- ethnicity |> ggplot(aes(x = fct_infreq(ethnicity), fill = ethn
 ethnicity_dist
 
 
+transfer <- df |> select(transfer) |> drop_na()
+transfer
+
+transfer_dist <- transfer |>
+  ggplot(aes(x = transfer, fill = transfer)) +
+  geom_bar(show.legend = FALSE) +
+  labs(title = "Transfer Student Distribution", x = "Transfer Status", y = "Count") +
+  theme_minimal(base_size = 14)
+transfer_dist
+
+international <- df |> select(international) |> drop_na()
+international
+
+international_dist <- international |>
+  ggplot(aes(x = international, fill = international)) +
+  geom_bar(show.legend = FALSE) +
+  labs(title = "International Student Distribution", x = "International Status", y = "Count") +
+  theme_minimal(base_size = 14)
+international_dist
+
+disabilities <- df |> select(disabilities) |> drop_na() |>
+  # Split at labels
+  mutate(disabilities = str_split(disabilities, ",")) |> 
+  unnest(disabilities) |> 
+  # Remove trailing commas
+  mutate(disabilities = str_replace(disabilities, ",$", "")) |>
+  filter(!grepl("[0-9]", disabilities)) |> filter(disabilities != "")
+disabilities
 
 
+disabilities_dist <- disabilities |> ggplot(aes(x = fct_infreq(disabilities),
+                                                fill = disabilities)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Disabilities Self-Identification", x = "Disabilities", 
+       y = "Count") +
+  theme_minimal(base_size = 14)
+disabilities_dist
 
 
+diagnosis <- df |> select(disab_diagnosis) |> drop_na()
+diagnosis
+
+
+diagnosis_dist <- diagnosis |> 
+  ggplot(aes(x = disab_diagnosis, fill = disab_diagnosis)) +
+  geom_bar(show.legend = FALSE) +
+  labs(title = "Diagnosis Distribution", x = "Diagnosis Status", y = "Count") +
+  theme_minimal(base_size = 14)
+diagnosis_dist
 
 
 
