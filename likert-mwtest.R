@@ -364,4 +364,117 @@ for (q in society_vars) {
 society_mw_results
 
 
+events_vars <- c("events_safe",
+                 "events_belong",
+                 "events_worth",
+                 "events_friends",
+                 "more_sporting",
+                 "more_parties",
+                 "alc_important",
+                 "food_important")
+
+events_labels <- c(events_safe    = "Felt Safe at Campus Events",
+                   events_belong  = "Felt a Sense of Belonging at Events",
+                   events_worth   = "Events Are Worth My Time",
+                   events_friends = "Make Friends at Events",
+                   more_sporting  = "Would Attend More Sporting Events",
+                   more_parties   = "Would Attend More Parties",
+                   alc_important  = "Alcohol Is Important at Events",
+                   food_important = "Food Is Important at Events")
+
+df_checked_2 <- df |>
+  filter(attention_SWA == "Somewhat Agree")
+
+df_events_long <- df_checked_2 |>
+  pivot_longer(cols = all_of(events_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = events_vars,
+                           labels = events_labels[events_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_events_all <- ggplot(df_events_long,
+                            aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "RdBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+df_events_long_FY <- df_checked_2 |>
+  filter(year_level == 1) |>
+  pivot_longer(cols = all_of(events_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = events_vars,
+                           labels = events_labels[events_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_events_FY <- ggplot(df_events_long_FY,
+                           aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PiYG", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_events_FY + likert_events_all
+
+events_mw_results <- tibble(question = character(),
+                            first_year_median = numeric(),
+                            non_first_median = numeric(),
+                            p_value = numeric(),
+                            significance = character(),
+                            higher_group = character())
+
+for (q in events_vars) {
+  
+  x <- df_checked_2 |>
+    filter(year_level == 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  y <- df_checked_2 |>
+    filter(year_level != 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x) + 1):length(combined)])
+  
+  higher <- case_when(mean_rank_x > mean_rank_y ~ "First-year higher",
+                      mean_rank_y > mean_rank_x ~ "Non-first-year higher",
+                      TRUE ~ "Equal")
+  
+  events_mw_results <- events_mw_results |>
+    add_row(question = events_labels[[q]],
+            first_year_median = med_x,
+            non_first_median = med_y,
+            p_value = test$p.value,
+            significance = ifelse(test$p.value < 0.05, "*", ""),
+            higher_group = higher)
+}
+
+events_mw_results
+
+
 
