@@ -583,4 +583,109 @@ for (q in merch_vars) {
 
 merch_mw_results
 
+ams_vars <- c("ams_awareness",
+              "ams_impact",
+              "ams_best_interest",
+              "ams_accountable",
+              "ams_budget",
+              "ams_good_job")
+
+ams_labels <- c(ams_awareness      = "Know What the AMS Does",
+                ams_impact         = "AMS Work Impacts Me",
+                ams_best_interest  = "AMS Has Students’ Best Interests in Mind",
+                ams_accountable    = "AMS Keeps UBC Accountable",
+                ams_budget         = "Trust AMS Budget Management",
+                ams_good_job       = "AMS Does a Good Job Overall")
+
+df_ams_long <- df_checked_2 |>
+  pivot_longer(cols = all_of(ams_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = ams_vars,
+                           labels = ams_labels[ams_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_ams_all <- ggplot(df_ams_long,
+                         aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "RdBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+df_ams_long_FY <- df_checked_2 |>
+  filter(year_level == 1) |>
+  pivot_longer(cols = all_of(ams_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = ams_vars,
+                           labels = ams_labels[ams_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_ams_FY <- ggplot(df_ams_long_FY,
+                        aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PiYG", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_ams_FY + likert_ams_all
+
+ams_mw_results <- tibble(question = character(),
+                         first_year_median = numeric(),
+                         non_first_median = numeric(),
+                         p_value = numeric(),
+                         significance = character(),
+                         higher_group = character())
+
+for (q in ams_vars) {
+  
+  x <- df_checked_2 |>
+    filter(year_level == 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  y <- df_checked_2 |>
+    filter(year_level != 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x) + 1):length(combined)])
+  
+  higher <- case_when(mean_rank_x > mean_rank_y ~ "First-year higher",
+                      mean_rank_y > mean_rank_x ~ "Non-first-year higher",
+                      TRUE ~ "Equal")
+  
+  ams_mw_results <- ams_mw_results |>
+    add_row(question = ams_labels[[q]],
+            first_year_median = med_x,
+            non_first_median = med_y,
+            p_value = test$p.value,
+            significance = ifelse(test$p.value < 0.05, "*", ""),
+            higher_group = higher)
+}
+
+ams_mw_results
+
 
