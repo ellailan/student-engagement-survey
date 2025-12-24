@@ -1,11 +1,10 @@
 
 #TO-DO
-#CHOOSE HOW TO FACTORIZE LIKERT SCALES
-#non-attention filter
-#LIKERT GRAPHS
-#SUMMARY STATS
-#HYPOTHESIS TESTS + GRAPHS
-#FIGURE OUT REPO SETUP... commits... 
+#---------
+#graphs for summary of subject-specific Qs
+#likert for other groups of interest
+#edit graphs for better visbility/easier comparison
+#compare pop. data to that from official census
 
 
 source("datacleaning.R")
