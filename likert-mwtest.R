@@ -476,5 +476,111 @@ for (q in events_vars) {
 
 events_mw_results
 
+merch_vars <- c("merch_belonging",
+                "merch_campus",
+                "merch_off_campus",
+                "merch_access",
+                "blue_gold",
+                "tbird_pride",
+                "ubc_pride")
+
+merch_labels <- c(merch_belonging  = "Merchandise Increases Belonging",
+                  merch_campus     = "Wear UBC Merch on Campus",
+                  merch_off_campus = "Wear UBC Merch Off Campus",
+                  merch_access     = "Lower Cost Would Increase Use",
+                  blue_gold        = "Feel Connected to Blue & Gold Branding",
+                  tbird_pride      = "Proud to Be a Thunderbird",
+                  ubc_pride        = "Proud to Associate with UBC")
+
+df_merch_long <- df_checked_2 |>
+  pivot_longer(cols = all_of(merch_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = merch_vars,
+                           labels = merch_labels[merch_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_merch_all <- ggplot(df_merch_long,
+                           aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "RdBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+df_merch_long_FY <- df_checked_2 |>
+  filter(year_level == 1) |>
+  pivot_longer(cols = all_of(merch_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = merch_vars,
+                           labels = merch_labels[merch_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_merch_FY <- ggplot(df_merch_long_FY,
+                          aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PiYG", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_merch_FY + likert_merch_all
+
+merch_mw_results <- tibble(question = character(),
+                           first_year_median = numeric(),
+                           non_first_median = numeric(),
+                           p_value = numeric(),
+                           significance = character(),
+                           higher_group = character())
+
+for (q in merch_vars) {
+  
+  x <- df_checked_2 |>
+    filter(year_level == 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  y <- df_checked_2 |>
+    filter(year_level != 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x) + 1):length(combined)])
+  
+  higher <- case_when(mean_rank_x > mean_rank_y ~ "First-year higher",
+                      mean_rank_y > mean_rank_x ~ "Non-first-year higher",
+                      TRUE ~ "Equal")
+  
+  merch_mw_results <- merch_mw_results |>
+    add_row(question = merch_labels[[q]],
+            first_year_median = med_x,
+            non_first_median = med_y,
+            p_value = test$p.value,
+            significance = ifelse(test$p.value < 0.05, "*", ""),
+            higher_group = higher)
+}
+
+merch_mw_results
 
 
