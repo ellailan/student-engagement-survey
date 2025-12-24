@@ -11,7 +11,7 @@ likert_levels <- c(
   "Somewhat Agree",
   "Strongly Agree")
 
-# variables (exclude attention_SD from plotting)
+# variables (exclude attention_SD from plottingx)
 community_vars_1 <- c(
   "sense_of_belonging",
   "safe_on_campus",
@@ -251,4 +251,117 @@ for(q in community_vars_2) {
     p_value = test$p.value,
     significance = ifelse(test$p.value < 0.05, "*", ""),
     higher_group = higher)}
+
+
+society_vars <- c("constituency_events",
+                  "constituency_resource",
+                  "constituency_program",
+                  "constituency_identity",
+                  "constituency_belonging")
+
+society_labels <- c(constituency_events    = "Attend Society Events",
+                    constituency_resource  = "Use Society Resources",
+                    constituency_program   = "Know What Programming Is Available",
+                    constituency_identity  = "Society Is Part of My Identity",
+                    constituency_belonging = "Feel a Sense of Belonging in My Society")
+
+df_checked <- df |> filter(attention_SD == "Strongly Disagree")
+
+df_society_long <- df_checked |>
+  pivot_longer(cols = all_of(society_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = society_vars,
+                           labels = society_labels[society_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_society_all <- ggplot(df_society_long,
+                             aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "RdBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_society_all
+
+df_society_long_FY <- df_checked |>
+  filter(year_level == 1) |>
+  pivot_longer(cols = all_of(society_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(response = factor(response, levels = likert_levels),
+         question = factor(question,
+                           levels = society_vars,
+                           labels = society_labels[society_vars])) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_society_FY <- ggplot(df_society_long_FY,
+                            aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PiYG", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_society_FY
+
+likert_society_FY + likert_society_all
+
+
+society_mw_results <- tibble(question = character(),
+                             first_year_median = numeric(),
+                             non_first_median = numeric(),
+                             p_value = numeric(),
+                             significance = character(),
+                             higher_group = character())
+
+for (q in society_vars) {
+  
+  x <- df_checked |>
+    filter(year_level == 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  y <- df_checked |>
+    filter(year_level != 1) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x) + 1):length(combined)])
+  
+  higher <- case_when(mean_rank_x > mean_rank_y ~ "First-year higher",
+                      mean_rank_y > mean_rank_x ~ "Non-first-year higher",
+                      TRUE ~ "Equal")
+  
+  society_mw_results <- society_mw_results |>
+    add_row(question = society_labels[[q]],
+            first_year_median = med_x,
+            non_first_median = med_y,
+            p_value = test$p.value,
+            significance = ifelse(test$p.value < 0.05, "*", ""),
+            higher_group = higher)
+}
+
+society_mw_results
+
+
 
