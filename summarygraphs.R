@@ -342,9 +342,6 @@ diagnosis_dist <- diagnosis |>
 diagnosis_dist
 
 
-
-
-
 #generate a word-cloud with descriptions of student life
 bing <- get_sentiments("bing")
 
@@ -398,3 +395,45 @@ negative_cloud <- sent_words |>
   theme(plot.background = element_rect(fill = "#fad4d2", color = NA))
 
 #print positive, negative clouds side by side
+
+
+
+
+event_non_attend <- df |> select(non_attend_reasons) |>   # Split at labels
+  mutate(non_attend_reasons = str_split(non_attend_reasons, ",")) |> 
+  unnest(non_attend_reasons) |> 
+  # Remove trailing commas
+  mutate(non_attend_reasons = str_replace(non_attend_reasons, ",$", "")) |>
+  filter(!grepl("[0-9]", non_attend_reasons)) |> filter(non_attend_reasons != "")
+event_non_attend
+
+
+event_non_attend_dist <- event_non_attend |> 
+  ggplot(aes(x = fct_infreq(non_attend_reasons), fill = non_attend_reasons)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +  # flip to horizontal
+  labs(title = "Reasons Students Don't Attend Events", x = "Reasons", y = "Count") +
+  theme_minimal(base_size = 14)
+
+event_non_attend_dist
+
+
+merch <- df |> select(ubc_merch) |> 
+  drop_na() |>
+  # Split at labels
+  mutate(ubc_merch = str_split(ubc_merch, "(?=[A-J]\\.)")) |> 
+  unnest(ubc_merch) |> 
+  # Remove trailing commas
+  mutate(ubc_merch = str_replace(ubc_merch, ",$", "")) |>
+  filter(!grepl("[0-9]", ubc_merch)) |> filter(ubc_merch != "")
+merch
+
+
+
+merch_dist <- merch |>
+  ggplot(aes(x = fct_infreq(ubc_merch), fill = ubc_merch)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +  # flip to horizontal
+  labs(title = "Merch Students Own", x = "Type", y = "Count") +
+  theme_minimal(base_size = 14)
+merch_dist
