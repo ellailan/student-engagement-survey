@@ -437,3 +437,22 @@ merch_dist <- merch |>
   labs(title = "Merch Students Own", x = "Type", y = "Count") +
   theme_minimal(base_size = 14)
 merch_dist
+
+
+found_survey <- df |> select(lead_to_survey) |> drop_na() |>
+  mutate(lead_to_survey = str_split(lead_to_survey, "(?=[A-J]\\.)")) |> 
+  unnest(lead_to_survey) |> 
+  # Remove trailing commas
+  mutate(lead_to_survey = str_replace(lead_to_survey, ",$", "")) |>
+  filter(!grepl("[0-9]", lead_to_survey)) |> filter(lead_to_survey != "")
+found_survey
+
+
+found_survey_dist <- found_survey |> ggplot(aes(x = fct_infreq(lead_to_survey), 
+                                                fill = lead_to_survey)) +
+  geom_bar(show.legend = FALSE) +
+  coord_flip() +  # flip to horizontal
+  labs(title = "What Brought Students to this Survey", x = "Type", y = "Count") +
+  theme_minimal(base_size = 14)
+found_survey_dist
+
