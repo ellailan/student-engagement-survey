@@ -1,7 +1,7 @@
 
 #TO-DO
 #---------
-#graphs for summary of subject-specific Qs
+#word-based Q's - how to visiualize answers?
 #likert for other groups of interest
 #edit graphs for better visbility/easier comparison
 #compare pop. data to that from official census
