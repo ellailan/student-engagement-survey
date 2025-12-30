@@ -984,6 +984,219 @@ for (q in events_vars) {
 events_mw_disabled
 
 
+df_commuters <- df_checked |>
+  filter(!str_detect(living_arrangement, "On campus"))
+
+df_non_commuters <- df_checked |>
+  filter(str_detect(living_arrangement, "On campus"))
+
+
+df_long_1C <- df_commuters |>
+  pivot_longer(
+    cols = all_of(community_vars_1),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(
+      question,
+      levels = community_vars_1,
+      labels = community_labels_1[community_vars_1]
+    )
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_community_1C <- ggplot(df_long_1C,
+                              aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "YlGnBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_community_1C + likert_community_1
+
+
+community_1_mw_commuters <- tibble(
+  question = character(),
+  commuters_median = numeric(),
+  non_commuters_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in community_vars_1) {
+  
+  x <- df_commuters |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_non_commuters |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  
+  community_1_mw_commuters <- community_1_mw_commuters |>
+    add_row(
+      question = community_labels_1[[q]],
+      commuters_median = median(x, na.rm = TRUE),
+      non_commuters_median = median(y, na.rm = TRUE),
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = case_when(
+        mean(ranks[1:length(x)]) > mean(ranks[(length(x)+1):length(combined)]) ~ "Commuters higher",
+        TRUE ~ "Non-commuters higher"
+      )
+    )
+}
+
+community_1_mw_commuters
+
+
+df_long_2C <- df_commuters |>
+  pivot_longer(
+    cols = all_of(community_vars_2),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(
+      question,
+      levels = community_vars_2,
+      labels = community_labels_2[community_vars_2]
+    )
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_community_2C <- ggplot(df_long_2C,
+                              aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "YlGnBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_community_2C + likert_community_2
+
+community_2_mw_commuters <- tibble(
+  question = character(),
+  commuters_median = numeric(),
+  non_commuters_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in community_vars_2) {
+  
+  x <- df_commuters |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_non_commuters |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  
+  community_2_mw_commuters <- community_2_mw_commuters |>
+    add_row(
+      question = community_labels_2[[q]],
+      commuters_median = median(x, na.rm = TRUE),
+      non_commuters_median = median(y, na.rm = TRUE),
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = case_when(
+        mean(ranks[1:length(x)]) > mean(ranks[(length(x)+1):length(combined)]) ~ "Commuters higher",
+        TRUE ~ "Non-commuters higher"
+      )
+    )
+}
+
+community_1_mw_commuters
+community_2_mw_commuters
+
+
+df_events_long_C <- df_checked_2 |>
+  filter(!str_detect(disabilities, "J. None|K. Prefer Not to Say")) |>  # reuse attention filter
+  filter(!str_detect(living_arrangement, "On campus")) |>  # commuters
+  pivot_longer(
+    cols = all_of(events_vars),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(
+      question,
+      levels = events_vars,
+      labels = events_labels[events_vars]
+    )
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_events_C <- ggplot(df_events_long_C,
+                          aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "YlGnBu", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_events_C + likert_events_all
+
+events_mw_commuters <- tibble(
+  question = character(),
+  commuters_median = numeric(),
+  non_commuters_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in events_vars) {
+  
+  x <- df_checked_2 |>
+    filter(!str_detect(living_arrangement, "On campus")) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  y <- df_checked_2 |>
+    filter(str_detect(living_arrangement, "On campus")) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  
+  events_mw_commuters <- events_mw_commuters |>
+    add_row(
+      question = events_labels[[q]],
+      commuters_median = median(x, na.rm = TRUE),
+      non_commuters_median = median(y, na.rm = TRUE),
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = case_when(
+        mean(ranks[1:length(x)]) > mean(ranks[(length(x)+1):length(combined)]) ~ "Commuters higher",
+        TRUE ~ "Non-commuters higher"
+      )
+    )
+}
+
+events_mw_commuters
 
 
 
