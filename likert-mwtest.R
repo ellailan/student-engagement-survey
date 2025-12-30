@@ -207,6 +207,8 @@ run_mw_comparison <- function(df_a, df_b, vars, labels, name_a, name_b) {
 df_sd_checked <- df |> filter(attention_SD == "Strongly Disagree")
 # Variables later in the survey use attention_SWA
 df_swa_checked <- df |> filter(attention_SWA == "Somewhat Agree")
+#International students
+intl_string <- "A. Yes, I transferred to UBC from another post-secondary institution."
 
 # -- Group Subsets (Based on attention_SD) --
 df_sd_fy    <- df_sd_checked |> filter(year_level == 1)
@@ -218,6 +220,9 @@ df_sd_nondisabled <- df_sd_checked |> filter(disabilities == "J. None")
 df_sd_commuter    <- df_sd_checked |> filter(!str_detect(living_arrangement, "On campus"))
 df_sd_resident    <- df_sd_checked |> filter(str_detect(living_arrangement, "On campus"))
 
+df_sd_intl     <- df_sd_checked |> filter(transfer == intl_string)
+df_sd_domestic <- df_sd_checked |> filter(transfer != intl_string)
+
 # -- Group Subsets (Based on attention_SWA) --
 df_swa_fy    <- df_swa_checked |> filter(year_level == 1)
 df_swa_notfy <- df_swa_checked |> filter(year_level != 1)
@@ -227,6 +232,9 @@ df_swa_nondisabled <- df_swa_checked |> filter(disabilities == "J. None")
 
 df_swa_commuter    <- df_swa_checked |> filter(!str_detect(living_arrangement, "On campus"))
 df_swa_resident    <- df_swa_checked |> filter(str_detect(living_arrangement, "On campus"))
+
+df_swa_intl     <- df_swa_checked |> filter(transfer == intl_string)
+df_swa_domestic <- df_swa_checked |> filter(transfer != intl_string)
 
 # ==============================================================================
 # 4. PLOTS AND ANALYSIS
@@ -266,6 +274,19 @@ print(p_comm2_com + p_comm2_all)
 mw_comm1_com <- run_mw_comparison(df_sd_commuter, df_sd_resident, community_vars_1, community_labels_1, "Commuters", "Non-commuters")
 mw_comm2_com <- run_mw_comparison(df_sd_commuter, df_sd_resident, community_vars_2, community_labels_2, "Commuters", "Non-commuters")
 
+#8. International (Oranges)
+p_comm1_intl <- make_likert_plot(df_sd_intl, community_vars_1, community_labels_1, "Oranges")
+p_comm2_intl <- make_likert_plot(df_sd_intl, community_vars_2, community_labels_2, "Oranges")
+
+print(p_comm1_intl + p_comm1_all)
+print(p_comm2_intl + p_comm2_all)
+
+#9 MW Test: International vs Domestic
+mw_comm1_intl <- run_mw_comparison(df_sd_intl, df_sd_domestic, community_vars_1, community_labels_1, "International", "Domestic")
+mw_comm2_intl <- run_mw_comparison(df_sd_intl, df_sd_domestic, community_vars_2, community_labels_2, "International", "Domestic")
+
+
+
 
 ### SECTION B: SOCIETY (Using attention_SD)
 
@@ -296,6 +317,10 @@ mw_event_dis <- run_mw_comparison(df_swa_disabled, df_swa_nondisabled, events_va
 mw_event_com <- run_mw_comparison(df_swa_commuter, df_swa_resident, events_vars, events_labels, "Commuters", "Non-commuters")
 
 
+p_event_intl <- make_likert_plot(df_swa_intl, events_vars, events_labels, "Oranges")
+print(p_event_intl + p_event_all)
+mw_event_intl <- run_mw_comparison(df_swa_intl, df_swa_domestic, events_vars, events_labels, "International", "Domestic")
+
 ### SECTION D: MERCH (Using attention_SWA)
 
 p_merch_all <- make_likert_plot(df_swa_checked, merch_vars, merch_labels, "RdBu")
@@ -316,13 +341,20 @@ print(p_ams_fy + p_ams_all)
 mw_ams_fy <- run_mw_comparison(df_swa_fy, df_swa_notfy, ams_vars, ams_labels, "First-year", "Non-first-year")
 
 # ==============================================================================
-# 5. OUTPUT DISPLAY (Example of printing result tables)
+# 5. OUTPUT DISPLAY 
 # ==============================================================================
 
-# Print Community 1 Results
+# Print Community Results
 print(mw_comm1_fy)
 print(mw_comm1_dis)
 print(mw_comm1_com)
+print(mw_comm1_intl)
+
+
+print(mw_comm2_fy)
+print(mw_comm2_dis)
+print(mw_comm2_com)
+print(mw_comm2_intl)
 
 # Print Society Results
 print(mw_soc_fy)
@@ -332,3 +364,10 @@ print(mw_soc_dis)
 print(mw_event_fy)
 print(mw_event_dis)
 print(mw_event_com)
+print(mw_event_intl)
+
+#Print Merch and AMS results 
+print(mw_merch_fy)
+print(mw_ams_fy)
+
+
