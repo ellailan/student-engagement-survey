@@ -207,6 +207,8 @@ for(q in community_vars_1) {
 community_1_mw_results
 
 
+
+
 # Initialize results tibble for Community 1
 community_2_mw_results <- tibble(
   question = character(),
@@ -251,6 +253,8 @@ for(q in community_vars_2) {
     p_value = test$p.value,
     significance = ifelse(test$p.value < 0.05, "*", ""),
     higher_group = higher)}
+
+
 
 
 society_vars <- c("constituency_events",
@@ -727,6 +731,38 @@ likert_community_1D <- ggplot(df_long_1D,
 
 likert_community_1D + likert_community_1
 
+df_long_2D <- df_disabled |>
+  pivot_longer(
+    cols = all_of(community_vars_2),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(
+      question,
+      levels = community_vars_2,
+      labels = community_labels_2[community_vars_2]
+    )
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_community_2D <- ggplot(
+  df_long_2D,
+  aes(x = prop, y = question, fill = response)
+) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PuOr", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_community_2D + likert_community_2
+
+
 community_1_mw_disabled <- tibble(
   question = character(),
   disabled_median = numeric(),
@@ -769,4 +805,185 @@ for (q in community_vars_1) {
 }
 
 community_1_mw_disabled
+
+community_2_mw_disabled <- tibble(
+  question = character(),
+  disabled_median = numeric(),
+  non_disabled_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in community_vars_2) {
+  
+  x <- df_disabled |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_non_disabled |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  
+  community_2_mw_disabled <- community_2_mw_disabled |>
+    add_row(
+      question = community_labels_2[[q]],
+      disabled_median = median(x, na.rm = TRUE),
+      non_disabled_median = median(y, na.rm = TRUE),
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = case_when(
+        mean(ranks[1:length(x)]) > mean(ranks[(length(x)+1):length(combined)]) ~ "Disabled higher",
+        TRUE ~ "Non-disabled higher"
+      )
+    )
+}
+
+
+community_1_mw_disabled
+community_2_mw_disabled
+
+
+
+
+df_society_long_D <- df_disabled |>
+  pivot_longer(cols = all_of(society_vars),
+               names_to = "question",
+               values_to = "response") |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(question,
+                      levels = society_vars,
+                      labels = society_labels[society_vars])
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_society_D <- ggplot(df_society_long_D,
+                           aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PuOr", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_society_D + likert_society_all
+
+society_mw_disabled <- tibble(
+  question = character(),
+  disabled_median = numeric(),
+  non_disabled_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in society_vars) {
+  
+  x <- df_disabled |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_non_disabled |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  
+  society_mw_disabled <- society_mw_disabled |>
+    add_row(
+      question = society_labels[[q]],
+      disabled_median = median(x, na.rm = TRUE),
+      non_disabled_median = median(y, na.rm = TRUE),
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = case_when(
+        mean(ranks[1:length(x)]) > mean(ranks[(length(x)+1):length(combined)]) ~ "Disabled higher",
+        TRUE ~ "Non-disabled higher"
+      )
+    )
+}
+
+society_mw_disabled
+
+df_events_long_D <- df_checked_2 |>
+  filter(!disabilities %in% c("J. None", "K. Prefer Not to Say")) |>
+  pivot_longer(
+    cols = all_of(events_vars),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(
+      question,
+      levels = events_vars,
+      labels = events_labels[events_vars]
+    )
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_events_D <- ggplot(
+  df_events_long_D,
+  aes(x = prop, y = question, fill = response)
+) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PuOr", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_events_D + likert_events_all
+
+
+events_mw_disabled <- tibble(
+  question = character(),
+  disabled_median = numeric(),
+  non_disabled_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in events_vars) {
+  
+  x <- df_checked_2 |>
+    filter(!disabilities %in% c("J. None", "K. Prefer Not to Say")) |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  y <- df_checked_2 |>
+    filter(disabilities == "J. None") |>
+    pull(q) |>
+    factor(levels = likert_levels) |>
+    as.numeric()
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  
+  events_mw_disabled <- events_mw_disabled |>
+    add_row(
+      question = events_labels[[q]],
+      disabled_median = median(x, na.rm = TRUE),
+      non_disabled_median = median(y, na.rm = TRUE),
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = case_when(
+        mean(ranks[1:length(x)]) > mean(ranks[(length(x) + 1):length(combined)]) ~ "Disabled higher",
+        TRUE ~ "Non-disabled higher"
+      )
+    )
+}
+
+events_mw_disabled
+
+
+
+
 
