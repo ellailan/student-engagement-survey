@@ -689,3 +689,84 @@ for (q in ams_vars) {
 ams_mw_results
 
 
+
+df
+
+df_disabled <- df_checked |> 
+  filter(!disabilities %in% c("J. None", "K. Prefer Not to Say"))
+
+df_disabled
+
+df_non_disabled <- df_checked |> 
+  filter(disabilities == "J. None")
+
+df_long_1D <- df_disabled |>
+  pivot_longer(
+    cols = all_of(community_vars_1),
+    names_to = "question",
+    values_to = "response"
+  ) |>
+  filter(!is.na(response)) |>
+  mutate(
+    response = factor(response, levels = likert_levels),
+    question = factor(question,
+                      levels = community_vars_1,
+                      labels = community_labels_1[community_vars_1])
+  ) |>
+  count(question, response) |>
+  group_by(question) |>
+  mutate(prop = n / sum(n))
+
+likert_community_1D <- ggplot(df_long_1D,
+                              aes(x = prop, y = question, fill = response)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "PuOr", direction = 1) +
+  labs(x = "Proportion", y = NULL, fill = "Response") +
+  theme_minimal(base_size = 13)
+
+likert_community_1D + likert_community_1
+
+community_1_mw_disabled <- tibble(
+  question = character(),
+  disabled_median = numeric(),
+  non_disabled_median = numeric(),
+  p_value = numeric(),
+  significance = character(),
+  higher_group = character()
+)
+
+for (q in community_vars_1) {
+  
+  x <- df_disabled |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  y <- df_non_disabled |> pull(q) |> factor(levels = likert_levels) |> as.numeric()
+  
+  med_x <- median(x, na.rm = TRUE)
+  med_y <- median(y, na.rm = TRUE)
+  
+  test <- wilcox.test(x, y)
+  
+  combined <- c(x, y)
+  ranks <- rank(combined)
+  mean_rank_x <- mean(ranks[1:length(x)])
+  mean_rank_y <- mean(ranks[(length(x) + 1):length(combined)])
+  
+  higher <- case_when(
+    mean_rank_x > mean_rank_y ~ "Disabled higher",
+    mean_rank_y > mean_rank_x ~ "Non-disabled higher",
+    TRUE ~ "Equal"
+  )
+  
+  community_1_mw_disabled <- community_1_mw_disabled |>
+    add_row(
+      question = community_labels_1[[q]],
+      disabled_median = med_x,
+      non_disabled_median = med_y,
+      p_value = test$p.value,
+      significance = ifelse(test$p.value < 0.05, "*", ""),
+      higher_group = higher
+    )
+}
+
+community_1_mw_disabled
+
