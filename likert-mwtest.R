@@ -223,6 +223,11 @@ df_sd_resident    <- df_sd_checked |> filter(str_detect(living_arrangement, "On 
 df_sd_intl     <- df_sd_checked |> filter(transfer == intl_string)
 df_sd_domestic <- df_sd_checked |> filter(transfer != intl_string)
 
+df_sd_participant <- df_sd_checked |> filter(extracurriculars != "K. None")
+df_sd_non_participant <- df_sd_checked |>
+  filter(str_detect(extracurriculars, "K. None"))
+
+
 # -- Group Subsets (Based on attention_SWA) --
 df_swa_fy    <- df_swa_checked |> filter(year_level == 1)
 df_swa_notfy <- df_swa_checked |> filter(year_level != 1)
@@ -235,6 +240,11 @@ df_swa_resident    <- df_swa_checked |> filter(str_detect(living_arrangement, "O
 
 df_swa_intl     <- df_swa_checked |> filter(transfer == intl_string)
 df_swa_domestic <- df_swa_checked |> filter(transfer != intl_string)
+
+df_swa_participant <- df_swa_checked |> filter(extracurriculars != "K. None")
+df_swa_non_participant <- df_swa_checked |>
+  filter(str_detect(extracurriculars, "K. None"))
+
 
 # ==============================================================================
 # 4. PLOTS AND ANALYSIS
@@ -285,8 +295,24 @@ print(p_comm2_intl + p_comm2_all)
 mw_comm1_intl <- run_mw_comparison(df_sd_intl, df_sd_domestic, community_vars_1, community_labels_1, "International", "Domestic")
 mw_comm2_intl <- run_mw_comparison(df_sd_intl, df_sd_domestic, community_vars_2, community_labels_2, "International", "Domestic")
 
+#10. Non-participators (Greens)
+p_comm1_part <- make_likert_plot(df_sd_participant, community_vars_1, community_labels_1, "Greens")
+p_comm2_part <- make_likert_plot(df_sd_participant, community_vars_2, community_labels_2, "Greens")
 
+print(p_comm1_part + p_comm1_all)
+print(p_comm2_part + p_comm2_all)
 
+#11. MW Test: Non-participators
+
+mw_comm1_part <- run_mw_comparison(
+  df_sd_participant, df_sd_non_participant,
+  community_vars_1, community_labels_1,
+  "Participants", "Non-participants")
+
+mw_comm2_part <- run_mw_comparison(
+  df_sd_participant, df_sd_non_participant,
+  community_vars_2, community_labels_2,
+  "Participants", "Non-participants")
 
 ### SECTION B: SOCIETY (Using attention_SD)
 
@@ -299,6 +325,14 @@ print(p_soc_dis + p_soc_all)
 
 mw_soc_fy  <- run_mw_comparison(df_sd_fy, df_sd_notfy, society_vars, society_labels, "First-year", "Non-first-year")
 mw_soc_dis <- run_mw_comparison(df_sd_disabled, df_sd_nondisabled, society_vars, society_labels, "Disabled", "Non-disabled")
+
+p_soc_part <- make_likert_plot(df_sd_participant, society_vars, society_labels, "Greens")
+print(p_soc_part + p_soc_all)
+
+mw_soc_part <- run_mw_comparison(
+  df_sd_participant, df_sd_non_participant,
+  society_vars, society_labels,
+  "Participants", "Non-participants")
 
 
 ### SECTION C: EVENTS (Using attention_SWA)
@@ -321,6 +355,16 @@ p_event_intl <- make_likert_plot(df_swa_intl, events_vars, events_labels, "Orang
 print(p_event_intl + p_event_all)
 mw_event_intl <- run_mw_comparison(df_swa_intl, df_swa_domestic, events_vars, events_labels, "International", "Domestic")
 
+p_event_part <- make_likert_plot(df_swa_participant, events_vars, events_labels, "Greens")
+print(p_event_part + p_event_all)
+
+mw_event_part <- run_mw_comparison(
+  df_swa_participant, df_swa_non_participant,
+  events_vars, events_labels,
+  "Participants", "Non-participants")
+
+
+
 ### SECTION D: MERCH (Using attention_SWA)
 
 p_merch_all <- make_likert_plot(df_swa_checked, merch_vars, merch_labels, "RdBu")
@@ -329,6 +373,14 @@ p_merch_fy  <- make_likert_plot(df_swa_fy, merch_vars, merch_labels, "PiYG")
 print(p_merch_fy + p_merch_all)
 
 mw_merch_fy <- run_mw_comparison(df_swa_fy, df_swa_notfy, merch_vars, merch_labels, "First-year", "Non-first-year")
+
+p_merch_part <- make_likert_plot(df_swa_participant, merch_vars, merch_labels, "Greens")
+print(p_merch_part + p_merch_all)
+
+mw_merch_part <- run_mw_comparison(
+  df_swa_participant, df_swa_non_participant,
+  merch_vars, merch_labels,
+  "Participants", "Non-participants")
 
 
 ### SECTION E: AMS (Using attention_SWA)
@@ -340,6 +392,15 @@ print(p_ams_fy + p_ams_all)
 
 mw_ams_fy <- run_mw_comparison(df_swa_fy, df_swa_notfy, ams_vars, ams_labels, "First-year", "Non-first-year")
 
+p_ams_part <- make_likert_plot(df_swa_participant, ams_vars, ams_labels, "Greens")
+print(p_ams_part + p_ams_all)
+
+mw_ams_part <- run_mw_comparison(
+  df_swa_participant, df_swa_non_participant,
+  ams_vars, ams_labels,
+  "Participants", "Non-participants")
+
+
 # ==============================================================================
 # 5. OUTPUT DISPLAY 
 # ==============================================================================
@@ -349,6 +410,8 @@ print(mw_comm1_fy)
 print(mw_comm1_dis)
 print(mw_comm1_com)
 print(mw_comm1_intl)
+print(mw_comm1_part)
+print(mw_comm2_part)
 
 
 print(mw_comm2_fy)
@@ -359,15 +422,22 @@ print(mw_comm2_intl)
 # Print Society Results
 print(mw_soc_fy)
 print(mw_soc_dis)
+print(mw_soc_part)
 
 # Print Events Results
 print(mw_event_fy)
 print(mw_event_dis)
 print(mw_event_com)
 print(mw_event_intl)
+print(mw_event_part)
 
 #Print Merch and AMS results 
 print(mw_merch_fy)
 print(mw_ams_fy)
+
+print(mw_merch_part)
+print(mw_ams_part)
+
+
 
 
