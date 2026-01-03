@@ -5,37 +5,49 @@ source("datacleaning.R")
 # ==========================================
 
 # High-level Bar Plot Renderer
-render_bar_dist <- function(data, x_var, title, flip = TRUE, sort = TRUE, palette = NULL) {
+render_bar_dist <- function(data, x_var, title, flip = TRUE, sort = TRUE) {
   x_sym <- sym(x_var)
+  n_levels <- n_distinct(data[[x_var]])
   
-  p <- ggplot(data, aes(x = if(sort) fct_infreq(!!x_sym) else !!x_sym, fill = !!x_sym)) +
-    geom_bar(show.legend = FALSE, alpha = 0.9) +
+  # Use wesanderson palette; repeat colors if more levels than palette length
+  base_palette <- wesanderson::wes_palette("Darjeeling1", n = max(n_levels, 3), type = "continuous")
+  
+  ggplot(data, aes(x = if(sort) fct_infreq(!!x_sym) else !!x_sym, fill = !!x_sym)) +
+    geom_bar(show.legend = FALSE, alpha = 0.85, color = "white") +
+    scale_fill_manual(values = rep(base_palette, length.out = n_levels)) +
     labs(title = title, x = NULL, y = "Count") +
     theme_minimal(base_size = 14) +
     theme(
       axis.title = element_text(face = "bold"),
+      axis.text.y = element_text(size = 10),
       panel.grid.major.x = element_blank()
-    )
-  
-  if (!is.null(palette)) {
-    p <- p + scale_fill_manual(values = palette)
-  }
-  
-  if (flip) p <- p + coord_flip()
-  return(p)
+    ) +
+    {if(flip) coord_flip()}
 }
 
-# High-level Histogram Renderer
-render_hist_dist <- function(data, x_var, title, bins = 30, fill = "steelblue") {
+
+# High-level Histogram Renderer (fixed)
+render_hist_dist <- function(data, x_var, title, bins = 30) {
   x_sym <- sym(x_var)
   
+  # Use a single pleasing color from Wes Anderson
+  fill_color <- wesanderson::wes_palette("Darjeeling1", type = "continuous")[2]
+  
   ggplot(data, aes(x = !!x_sym)) +
-    geom_histogram(bins = bins, fill = fill, color = "white", alpha = 0.9) +
+    geom_histogram(
+      bins = bins,
+      fill = fill_color,
+      color = "white",
+      alpha = 0.85
+    ) +
     labs(title = title, x = title, y = "Number of Respondents") +
     theme_minimal(base_size = 13) +
-    theme(axis.title = element_text(face = "bold"))
+    theme(
+      axis.title = element_text(face = "bold"),
+      axis.text = element_text(size = 10),
+      panel.grid.minor = element_blank()
+    )
 }
-
 # ==========================================
 # SECTION 2: CLEANING & EXECUTION
 # ==========================================
@@ -45,7 +57,7 @@ student_status_dist <- df |> select(student_status) |> drop_na() |>
   render_bar_dist("student_status", "Student Status", flip = FALSE)
 
 affiliate_dist <- df |> select(isaffiliate) |> drop_na() |> 
-  render_bar_dist("isaffiliate", "Affiliate Status Distribution", flip = FALSE, palette = c("steelblue", "tomato"))
+  render_bar_dist("isaffiliate", "Affiliate Status Distribution", flip = FALSE)
 
 affiliate_school_dist <- df |> select(affiliate_school) |> drop_na() |> 
   render_bar_dist("affiliate_school", "Affiliate School Distribution")
@@ -120,11 +132,12 @@ found_survey_dist <- df |> select(lead_to_survey) |> drop_na() |>
 # 3. Continuous Data (Histograms)
 commute_dist <- df |> select(commute_time) |> drop_na() |> 
   mutate(commute_time = as.numeric(commute_time)) |> filter(commute_time <= 480) |> 
-  render_hist_dist("commute_time", "Commute Time (minutes)", bins = 60, fill = "#3B9AB2")
+  render_hist_dist("commute_time", "Commute Time (minutes)", bins = 60)
+
 
 age_dist <- df |> select(age) |> drop_na() |> 
   mutate(age = as.numeric(age)) |> filter(age < 100, age > 13) |> 
-  render_hist_dist("age", "Age of Students", bins = 20, fill = "#F2AD00")
+  render_hist_dist("age", "Age of Students", bins = 20)
 
 
 
