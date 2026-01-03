@@ -107,33 +107,37 @@ ams_labels <- c(
 #' @param palette RColorBrewer palette name
 make_likert_plot <- function(data, vars, labels, palette = "RdBu") {
   
-  df_long <- data |>
-    pivot_longer(
-      cols = all_of(vars),
-      names_to = "question",
-      values_to = "response"
-    ) |>
-    filter(!is.na(response)) |>
-    mutate(
-      response = factor(response, levels = likert_levels),
-      question = factor(question, levels = vars, labels = labels[vars])
-    ) |>
-    count(question, response) |>
-    group_by(question) |>
-    mutate(prop = n / sum(n))
+  # Ensure all vars are factors with Likert levels
+  for (v in vars) {
+    data[[v]] <- factor(
+      as.character(data[[v]]),
+      levels = likert_levels
+    )
+  }
   
-  ggplot(df_long, aes(x = prop, y = question, fill = response)) +
-    geom_col() +
-    scale_x_continuous(labels = scales::percent_format()) +
+  # Prepare items for likert package
+  items <- as.data.frame(data[, vars, drop = FALSE])
+  colnames(items) <- labels[vars]
+  
+  likert_data <- likert::likert(items = items)
+  
+  # Plot stacked diverging bars, clean and simple
+  plot(
+    likert_data,
+    centered = TRUE,
+    wrap = 45
+  ) +
     scale_fill_brewer(palette = palette, direction = 1) +
-    labs(x = "Proportion", y = NULL, fill = "Response") +
     theme_minimal(base_size = 13) +
     theme(
-      legend.position = "bottom",
-      legend.justification = "center",
-      legend.box.just = "center"
+      legend.position = "none",       # remove legend
+      axis.text.y = element_text(size = 10),
+      panel.grid.major.y = element_blank()
     )
 }
+
+
+
 
 #' Perform Mann-Whitney U Tests between two groups
 #' @param df_a Dataframe for Group A
