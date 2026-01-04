@@ -404,6 +404,64 @@ mw_ams_part <- run_mw_comparison(
   ams_vars, ams_labels,
   "Participants", "Non-participants")
 
+# ==============================================================================
+# 4A. WHOLE-POPULATION SUMMARY (MEANS & MEDIANS)
+# ==============================================================================
+
+summarize_likert_population <- function(data, vars, labels) {
+  
+  data |>
+    select(all_of(vars)) |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "variable",
+      values_to = "response"
+    ) |>
+    mutate(
+      response_num = as.numeric(factor(response, levels = likert_levels)),
+      question = labels[variable]
+    ) |>
+    group_by(question) |>
+    summarise(
+      n = sum(!is.na(response_num)),
+      mean = round(mean(response_num, na.rm = TRUE), 2),
+      median = median(response_num, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    arrange(desc(mean))
+}
+
+# Community
+avg_comm_1_all <- summarize_likert_population(df_sd_checked, community_vars_1, community_labels_1)
+avg_comm_2_all <- summarize_likert_population(df_sd_checked, community_vars_2, community_labels_2)
+
+# Society
+avg_soc_all <- summarize_likert_population(df_sd_checked, society_vars, society_labels)
+
+# Events
+avg_event_all <- summarize_likert_population(df_swa_checked, events_vars, events_labels)
+
+# Merch
+avg_merch_all <- summarize_likert_population(df_swa_checked, merch_vars, merch_labels)
+
+# AMS
+avg_ams_all <- summarize_likert_population(df_swa_checked, ams_vars, ams_labels)
+
+print(avg_comm_1_all)
+print(avg_comm_2_all)
+print(avg_soc_all)
+print(avg_event_all)
+print(avg_merch_all)
+print(avg_ams_all)
+
+
+print(p_comm1_all)
+print(p_comm2_all)
+print(p_soc_all)
+print(p_event_all)
+print(p_merch_all)
+print(p_ams_all)
+
 
 # ==============================================================================
 # 5. OUTPUT DISPLAY 
@@ -441,7 +499,3 @@ print(mw_ams_fy)
 
 print(mw_merch_part)
 print(mw_ams_part)
-
-
-
-
