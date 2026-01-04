@@ -1,11 +1,11 @@
 
 #TO-DO
 #---------
-#word-based Q's - how to visiualize answers?
-#likert for other groups of interest
-#edit graphs for better visbility/easier comparison
-#compare pop. data to that from official census
-
+#Add likert comparisons to report
+#Interpret data
+#finish reccomendations
+#finish intro
+#format
 
 source("datacleaning.R")
 source("summarygraphs.R")
