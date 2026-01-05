@@ -173,3 +173,4 @@ negative_cloud <- sent_words |>
   scale_color_gradient(low = "#ff4d4d", high = "#a83232") +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "#fad4d2", color = NA))
+

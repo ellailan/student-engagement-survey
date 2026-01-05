@@ -263,6 +263,8 @@ p_comm2_all <- make_likert_plot(df_sd_checked, community_vars_2, community_label
 # 2. Plots: First Year (PiYG)
 p_comm1_fy <- make_likert_plot(df_sd_fy, community_vars_1, community_labels_1, "PiYG")
 print(p_comm1_fy + p_comm1_all) # Patchwork display
+p_comm2_fy <- make_likert_plot(df_sd_fy, community_vars_2, community_labels_2, "PiYG")
+print(p_comm2_fy + p_comm2_all) # Patchwork display
 
 # 3. MW Test: First Year vs Non-First Year
 mw_comm1_fy <- run_mw_comparison(df_sd_fy, df_sd_notfy, community_vars_1, community_labels_1, "First-year", "Non-first-year")
@@ -323,12 +325,22 @@ mw_comm2_part <- run_mw_comparison(
 p_soc_all <- make_likert_plot(df_sd_checked, society_vars, society_labels, "RdBu")
 p_soc_fy  <- make_likert_plot(df_sd_fy, society_vars, society_labels, "PiYG")
 p_soc_dis <- make_likert_plot(df_sd_disabled, society_vars, society_labels, "PuOr")
+p_soc_comm <- make_likert_plot(df_sd_commuter, society_vars, society_labels, "YlGnBu")
+
 
 print(p_soc_fy + p_soc_all)
 print(p_soc_dis + p_soc_all)
+print(p_soc_comm + p_soc_all)
+
+
 
 mw_soc_fy  <- run_mw_comparison(df_sd_fy, df_sd_notfy, society_vars, society_labels, "First-year", "Non-first-year")
 mw_soc_dis <- run_mw_comparison(df_sd_disabled, df_sd_nondisabled, society_vars, society_labels, "Disabled", "Non-disabled")
+mw_soc_comm <- run_mw_comparison(df_sd_commuter, df_sd_resident, society_vars, 
+                                 society_labels, "Commuter", "Non-Commuter")
+
+
+
 
 p_soc_part <- make_likert_plot(df_sd_participant, society_vars, society_labels, "Greens")
 print(p_soc_part + p_soc_all)
