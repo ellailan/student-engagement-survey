@@ -1,11 +1,4 @@
 
-#TO-DO
-#---------
-#Add likert comparisons to report
-#Interpret data
-#finish reccomendations
-#finish intro
-#format
 
 source("datacleaning.R")
 source("summarygraphs.R")
