@@ -219,3 +219,117 @@ part_ams_summary <- summarize_group_results(
   vars     = ams_vars, 
   labels   = ams_labels)
 print(part_ams_summary)
+
+
+#' Create a diverging stacked bar chart comparing groups
+#' @param data The combined dataframe containing all groups
+#' @param vars Vector of column names
+#' @param labels Named vector of question labels
+#' @param group_var The string name of the column used for grouping
+#' @param palette RColorBrewer palette name
+diverging_bar_graph <- function(data, vars, labels, group_var, palette = "RdBu") {
+  
+  # 1. Ensure all variables are factors with the global Likert levels
+  for (v in vars) {
+    data[[v]] <- factor(
+      as.character(data[[v]]),
+      levels = likert_levels
+    )
+  }
+  
+  # 2. Prepare items dataframe and apply labels
+  items <- as.data.frame(data[, vars, drop = FALSE])
+  colnames(items) <- labels[vars]
+  
+  # 3. Extract the grouping column as a factor
+  grouping_factor <- factor(data[[group_var]])
+  
+  # 4. Create the grouped likert object
+  likert_data <- likert::likert(items = items, grouping = grouping_factor)
+  
+  # 5. Plot with centering and grouped display
+  plot(
+    likert_data,
+    centered = TRUE,
+    wrap = 45
+  ) +
+    scale_fill_brewer(palette = palette, direction = 1) +
+    theme_minimal(base_size = 13) +
+    labs(fill = "Response Level") +
+    theme(
+      legend.position = "bottom",
+      axis.text.y = element_text(size = 10),
+      panel.grid.major.y = element_blank()
+    )
+}
+
+# 1. Prepare the comparison dataset
+diverging_bar_graph <- function(data, vars, labels, group_var, palette = "RdBu") {
+  plot_data <- data |> select(all_of(vars), all_of(group_var))
+  
+  # Ensure items are factors with correct levels
+  for (v in vars) {
+    plot_data[[v]] <- factor(as.character(plot_data[[v]]), levels = likert_levels)
+  }
+  
+  items <- as.data.frame(plot_data[, vars, drop = FALSE])
+  colnames(items) <- labels[vars]
+  grouping_factor <- factor(plot_data[[group_var]])
+  
+  likert_data <- likert::likert(items = items, grouping = grouping_factor)
+  
+  plot(likert_data, centered = TRUE, wrap = 45) +
+    scale_fill_brewer(palette = palette, direction = 1) +
+    theme_minimal(base_size = 12) +
+    labs(fill = "Response") +
+    theme(legend.position = "bottom", axis.text.y = element_text(size = 9))
+}
+
+# ==============================================================================
+# 2. ANALYSIS EXECUTION
+# ==============================================================================
+
+# Define question set metadata
+question_sets <- list(
+  list(name = "Community 1", vars = community_vars_1, labels = community_labels_1, type = "sd"),
+  list(name = "Community 2", vars = community_vars_2, labels = community_labels_2, type = "sd"),
+  list(name = "Society",     vars = society_vars,     labels = society_labels,     type = "sd"),
+  list(name = "Events",      vars = events_vars,      labels = events_labels,      type = "swa"),
+  list(name = "Merch",       vars = merch_vars,       labels = merch_labels,       type = "swa"),
+  list(name = "AMS",         vars = ams_vars,         labels = ams_labels,         type = "swa")
+)
+
+# Define target groups to analyze
+target_groups <- list(
+  list(label = "First Years",   sd_df = df_sd_fy,         swa_df = df_swa_fy,         pal = "PiYG"),
+  list(label = "Disabled",      sd_df = df_sd_disabled,   swa_df = df_swa_disabled,   pal = "PuOr"),
+  list(label = "Participants",  sd_df = df_sd_participant, swa_df = df_swa_participant, pal = "Greens")
+)
+
+# Run the full loop
+for (grp in target_groups) {
+  cat("\n\n", paste(rep("=", 60), collapse = ""), "\n")
+  cat("STARTING ANALYSIS FOR GROUP:", grp$label, "\n")
+  cat(paste(rep("=", 60), collapse = ""), "\n")
+  
+  for (set in question_sets) {
+    # 1. Select appropriate data frames based on the question set type
+    base_df  <- if(set$type == "sd") df_sd_checked else df_swa_checked
+    group_df <- if(set$type == "sd") grp$sd_df    else grp$swa_df
+    
+    # 2. Print Summary Table
+    cat("\n--- Summary Table:", set$name, "(Group:", grp$label, ") ---\n")
+    print(summarize_group_results(group_df, set$vars, set$labels))
+    
+    # 3. Generate and Print Comparison Plot
+    df_comp <- bind_rows(
+      base_df  |> mutate(comparison_group = "General Population"),
+      group_df |> mutate(comparison_group = grp$label)
+    )
+    
+    p <- diverging_bar_graph(df_comp, set$vars, set$labels, "comparison_group", palette = grp$pal) +
+      labs(title = paste(set$name, "-", grp$label, "vs General Population"))
+    
+    print(p)
+  }
+}
