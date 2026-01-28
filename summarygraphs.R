@@ -1,52 +1,63 @@
 source("datacleaning.R")
 
-# ==========================================
-# SECTION 1: RENDERING FUNCTIONS
+## ==========================================
+# SECTION 1: BRANDED RENDERING FUNCTIONS
 # ==========================================
 
-# High-level Bar Plot Renderer
+# Define Brand Colors from Brand Guide
+brand_palette <- c(
+  "royal_blue" = "#0057B7",
+  "cyan"       = "#41B6E6",
+  "dark_navy"  = "#052B48",
+  "warm_red"   = "#F9423A",
+  "white"      = "#FFFFFF"
+)
+
+# Shared Brand Theme for Consistency
+theme_brand_modern <- function() {
+  theme_minimal(base_size = 18) + # Significantly larger base font size
+    theme(
+      text = element_text(family = "sans", color = "#052B48"), # Modern sans-serif
+      plot.title = element_text(face = "bold", size = 22, margin = margin(b = 15)),
+      axis.title = element_text(face = "bold", size = 16),
+      axis.text = element_text(size = 14, color = "#052B48"),
+      panel.grid.minor = element_blank(),
+      panel.grid.major.x = element_blank(), # Cleaner modern look
+      plot.margin = margin(20, 20, 20, 20)
+    )
+}
+
+# Branded Bar Plot Renderer
 render_bar_dist <- function(data, x_var, title, flip = TRUE, sort = TRUE) {
   x_sym <- sym(x_var)
   n_levels <- n_distinct(data[[x_var]])
   
-  # Use wesanderson palette; repeat colors if more levels than palette length
-  base_palette <- wesanderson::wes_palette("Darjeeling1", n = max(n_levels, 3), type = "continuous")
+  # Cycle through brand colors excluding white and red (reserved for alerts)
+  fill_colors <- rep(c("#0057B7", "#41B6E6", "#052B48"), length.out = n_levels)
   
   ggplot(data, aes(x = if(sort) fct_infreq(!!x_sym) else !!x_sym, fill = !!x_sym)) +
-    geom_bar(show.legend = FALSE, alpha = 0.85, color = "white") +
-    scale_fill_manual(values = rep(base_palette, length.out = n_levels)) +
+    geom_bar(show.legend = FALSE, alpha = 0.9, color = "white", linewidth = 0.8) +
+    scale_fill_manual(values = fill_colors) +
+    coord_flip() +
     labs(title = title, x = NULL, y = "Count") +
-    theme_minimal(base_size = 14) +
-    theme(
-      axis.title = element_text(face = "bold"),
-      axis.text.y = element_text(size = 10),
-      panel.grid.major.x = element_blank()
-    ) +
+    theme_brand_modern() +
     {if(flip) coord_flip()}
 }
 
-
-# High-level Histogram Renderer (fixed)
+# Branded Histogram Renderer
 render_hist_dist <- function(data, x_var, title, bins = 30) {
   x_sym <- sym(x_var)
-  
-  # Use a single pleasing color from Wes Anderson
-  fill_color <- wesanderson::wes_palette("Darjeeling1", type = "continuous")[2]
   
   ggplot(data, aes(x = !!x_sym)) +
     geom_histogram(
       bins = bins,
-      fill = fill_color,
+      fill = "#0057B7", # Primary Royal Blue
       color = "white",
       alpha = 0.85
     ) +
     labs(title = title, x = title, y = "Number of Respondents") +
-    theme_minimal(base_size = 13) +
-    theme(
-      axis.title = element_text(face = "bold"),
-      axis.text = element_text(size = 10),
-      panel.grid.minor = element_blank()
-    )
+    theme_brand_modern() +
+    theme(panel.grid.major.x = element_line(color = "#E0E0E0")) # Re-enable vertical grids for histograms
 }
 # ==========================================
 # SECTION 2: CLEANING & EXECUTION
@@ -144,7 +155,7 @@ age_dist <- df |> select(age) |> drop_na() |>
 # ==========================================
 # SECTION 3: WORD CLOUDS
 # ==========================================
-
+# 1. Prepare Sentiment Data
 bing <- get_sentiments("bing")
 
 sent_words <- df |>
@@ -154,23 +165,37 @@ sent_words <- df |>
   inner_join(bing, by = "word") |>
   count(word, sentiment, sort = TRUE)
 
-# Render Positive Cloud
+# 2. Render Positive Cloud (Cyan to Royal Blue)
 positive_cloud <- sent_words |>
   filter(sentiment == "positive") |>
   ggplot(aes(label = word, size = n, color = n)) +
-  geom_text_wordcloud(rm_outside = TRUE, family = "Futura") +
-  scale_size_area(max_size = 12) +
-  scale_color_gradient(low = "#4586ff", high = "#00379e") +
+  geom_text_wordcloud(rm_outside = TRUE, family = "sans", fontface = "bold") +
+  scale_size_area(max_size = 25) + # Much larger size
+  scale_color_gradient(low = "#41B6E6", high = "#0057B7") + # Cyan to Royal Blue
   theme_minimal() +
-  theme(plot.background = element_rect(fill = "#d9edff", color = NA))
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    plot.title = element_text(family = "sans", face = "bold", size = 28, color = "#052B48", hjust = 0.5)
+  ) +
+  labs(title = "Positive Sentiments")
 
-# Render Negative Cloud
+# 3. Render Negative Cloud (Dark Navy to Warm Red)
 negative_cloud <- sent_words |>
   filter(sentiment == "negative") |>
   ggplot(aes(label = word, size = n, color = n)) +
-  geom_text_wordcloud(rm_outside = TRUE, family = "Futura") +
-  scale_size_area(max_size = 12) +
-  scale_color_gradient(low = "#ff4d4d", high = "#a83232") +
+  geom_text_wordcloud(rm_outside = TRUE, family = "sans", fontface = "bold") +
+  scale_size_area(max_size = 25) + # Much larger size
+  scale_color_gradient(low = "#052B48", high = "#F9423A") + # Dark Navy to Warm Red
   theme_minimal() +
-  theme(plot.background = element_rect(fill = "#fad4d2", color = NA))
+  theme(
+    plot.background = element_rect(fill = "#FFFFFF", color = NA),
+    plot.title = element_text(family = "sans", face = "bold", size = 28, color = "#052B48", hjust = 0.5)
+  ) +
+  labs(title = "Negative Sentiments")
+
+# Display the branded clouds
+print(positive_cloud)
+print(negative_cloud)
+positive_cloud + negative_cloud
+
 
